@@ -7,10 +7,10 @@ from pymilvus import MilvusClient, DataType
 session = requests.Session()
 session.trust_env = False
 
-DB_PATH = "/root/qwen3-vl/Qwen3-VL-Embedding-8B/milvus_qwen3vl.db"
+DB_PATH = "/root/qwen3-vl/Qwen3-VL-Embedding-2B/milvus_qwen3vl.db"
 client = MilvusClient(DB_PATH)
 collection_name = "qwen3_vl_images"
-IMAGE_DIR = "/root/qwen3-vl/Qwen3-VL-Embedding-8B/images"
+IMAGE_DIR = "/root/qwen3-vl/Qwen3-VL-Embedding-2B/images"
 
 
 def create_collection():

@@ -9,8 +9,8 @@ session = requests.Session()
 session.trust_env = False
 
 # 全部使用绝对路径
-DB_PATH    = "/root/qwen3-vl/Qwen3-VL-Embedding-8B/milvus_qwen3vl.db"
-IMAGE_DIR  = "/root/qwen3-vl/Qwen3-VL-Embedding-8B/images"
+DB_PATH    = "/root/qwen3-vl/Qwen3-VL-Embedding-2B/milvus_qwen3vl.db"
+IMAGE_DIR  = "/root/qwen3-vl/Qwen3-VL-Embedding-2B/images"
 COLLECTION = "qwen3_vl_images"
 API_URL    = "http://127.0.0.1:8848/v1/embeddings"
 
@@ -66,7 +66,7 @@ def show_results(query, results):
     plt.rcParams['axes.unicode_minus'] = False
     plt.tight_layout()
     safe_query = query[:20].replace(' ', '_').replace('/', '_')
-    out_path = f"/root/qwen3-vl/Qwen3-VL-Embedding-8B/result_{safe_query}.png"
+    out_path = f"/root/qwen3-vl/Qwen3-VL-Embedding-2B/result_{safe_query}.png"
     plt.savefig(out_path, dpi=150, bbox_inches='tight')
     print(f"✅ 结果已保存: {out_path}")
     plt.close()
