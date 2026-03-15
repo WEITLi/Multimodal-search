@@ -12,20 +12,20 @@ def predict():
     print(f"Generation on device: {device}")
 
     # ===== 1. 载入模型 =====
-    MODEL_PATH = "/root/qwen3-vl/Qwen3-VL-Embedding-2B"
+    MODEL_PATH = ".pretrain_models/Qwen3-VL-Embedding-2B"
     try:
         from transformers import AutoModel
         text_encoder = AutoModel.from_pretrained(MODEL_PATH, trust_remote_code=True).to(device)
         tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
     except:
         print("Mocking models for dry-run...")
-        text_encoder = nn.Linear(64, 4096).to(device)
+        text_encoder = nn.Linear(64, 2048).to(device)
         tokenizer = type('Mock', (object,), {
             "__call__": lambda self, t, **k: {'input_ids': torch.zeros((1, 64), dtype=torch.long), 'attention_mask': torch.ones((1, 64), dtype=torch.long)}
         })()
 
-    visual_projector = VisualProjector(out_dim=4096).to(device)
-    weights_path = "kdd_visual_projector_qwen3_2B.pth"
+    visual_projector = VisualProjector(out_dim=2048).to(device)
+    weights_path = "sft/kdd_visual_projector_qwen3_2B.pth"
     if os.path.exists(weights_path):
         visual_projector.load_state_dict(torch.load(weights_path, map_location=device))
         print("✅ Loaded trained Visual Projector weights.")
@@ -34,8 +34,8 @@ def predict():
     visual_projector.eval()
 
     # ===== 2. 读取测试集 (这里配置需要生成的集，比如 testA) =====
-    TEST_TSV = "multimodal_testA/testA.tsv"   # 按需替换 testB.tsv
-    OUTPUT_CSV = "submission.csv"
+    TEST_TSV = "data/multimodal_testA/testA.tsv"   # 按需替换 testB.tsv
+    OUTPUT_CSV = "test/submission.csv"
 
     if not os.path.exists(TEST_TSV):
         print(f"Dataset missing at {TEST_TSV}")
@@ -64,7 +64,14 @@ def predict():
                 data = dataset[first_idx]
                 
                 t_input = data['input_ids'].unsqueeze(0).to(device)
-                t_feat = text_encoder(t_input.float()) if isinstance(text_encoder, nn.Linear) else text_encoder(t_input)
+                t_mask  = data['attention_mask'].unsqueeze(0).to(device)
+                if isinstance(text_encoder, nn.Linear):
+                    t_feat = text_encoder(t_input.float())
+                else:
+                    out    = text_encoder(input_ids=t_input, attention_mask=t_mask)
+                    hidden = out.last_hidden_state
+                    mask_e = t_mask.unsqueeze(-1).expand(hidden.size()).float()
+                    t_feat = (hidden * mask_e).sum(1) / mask_e.sum(1).clamp(min=1e-9)
                 t_feat = torch.nn.functional.normalize(t_feat, dim=-1)
                 
                 cand_pids = []

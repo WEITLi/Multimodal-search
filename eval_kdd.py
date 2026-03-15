@@ -50,7 +50,7 @@ def evaluate():
             "__call__": lambda self, t, **kwargs: {'input_ids': torch.zeros((1, 64), dtype=torch.long), 'attention_mask': torch.ones((1, 64), dtype=torch.long)}
         })()
 
-    visual_projector = VisualProjector(out_dim=4096).to(device)
+    visual_projector = VisualProjector(out_dim=2048).to(device)
     
     weights_path = "sft/kdd_visual_projector_qwen3_2B.pth"
     if os.path.exists(weights_path):
@@ -97,9 +97,16 @@ def evaluate():
             data = dataset[first_idx]
             
             # 文本向量提取
-            t_input = data['input_ids'].unsqueeze(0).to(device) # [1, 64]
-            t_feat = text_encoder(t_input.float()) if isinstance(text_encoder, nn.Linear) else text_encoder(t_input)
-            t_feat = torch.nn.functional.normalize(t_feat, dim=-1) # [1, 4096]
+            t_input = data['input_ids'].unsqueeze(0).to(device)       # [1, seq_len]
+            t_mask  = data['attention_mask'].unsqueeze(0).to(device)   # [1, seq_len]
+            if isinstance(text_encoder, nn.Linear):
+                t_feat = text_encoder(t_input.float())
+            else:
+                out    = text_encoder(input_ids=t_input, attention_mask=t_mask)
+                hidden = out.last_hidden_state                         # [1, seq_len, hidden]
+                mask_e = t_mask.unsqueeze(-1).expand(hidden.size()).float()
+                t_feat = (hidden * mask_e).sum(1) / mask_e.sum(1).clamp(min=1e-9)  # [1, hidden]
+            t_feat = torch.nn.functional.normalize(t_feat, dim=-1)
             
             # 候选图片的视觉特征提取
             cand_pids = []

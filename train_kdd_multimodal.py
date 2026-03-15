@@ -19,8 +19,8 @@ class KDDMultimodalDataset(Dataset):
     """
     def __init__(self, tsv_file, tokenizer, max_boxes=36, max_text_len=64):
         print(f"Loading dataset from {tsv_file}...")
-        self.df = pd.read_csv(tsv_file, sep='\t', header=None, 
-                              names=['product_id', 'image_h', 'image_w', 'num_boxes', 
+        self.df = pd.read_csv(tsv_file, sep='\t', header=0,
+                              names=['product_id', 'image_h', 'image_w', 'num_boxes',
                                      'boxes', 'features', 'class_labels', 'query', 'query_id'])
         self.tokenizer = tokenizer
         self.max_boxes = max_boxes
@@ -186,7 +186,8 @@ def train():
     for param in text_encoder.parameters():
         param.requires_grad = False
         
-    visual_projector = VisualProjector(out_dim=4096).to(device)
+    # Qwen3-VL-2B 的 hidden_size = 2048，视觉侧输出维度必须与之对齐
+    visual_projector = VisualProjector(out_dim=2048).to(device)
     criterion = ITCA_Loss().to(device)
 
     # ==========================
@@ -221,9 +222,13 @@ def train():
             roi_mask = batch['roi_mask'].to(device)
 
             # --- Text Forward ---
-            # 真实通过 Qwen3 提取 Text Features
-            # (由于 Mock，此处为占位逻辑)
-            text_features = text_encoder(input_ids.float()) # 假定输出 [batch, 4096]
+            # input_ids 必须保持 Long 类型供 Embedding 层使用
+            out = text_encoder(input_ids=input_ids, attention_mask=att_mask)
+            # last_hidden_state: [batch, seq_len, hidden_dim]
+            # 用 attention_mask 做 mean pooling，忽略 padding token
+            hidden = out.last_hidden_state  # [batch, seq_len, hidden_dim]
+            mask_exp = att_mask.unsqueeze(-1).expand(hidden.size()).float()
+            text_features = (hidden * mask_exp).sum(1) / mask_exp.sum(1).clamp(min=1e-9)
 
             # --- Image Forward ---
             image_features = visual_projector(roi_feat, roi_box, roi_cls, roi_mask) # -> [batch, 4096]

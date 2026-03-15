@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model_name_or_path = "/root/qwen3-vl/Qwen3-VL-Embedding-2B"
+model_name_or_path = "./pretrain_models/Qwen3-VL-Embedding-2B"
 model = Qwen3VLEmbedder(model_name_or_path=model_name_or_path)
 
 def base64_to_image(image_base64: str):
