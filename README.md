@@ -1,5 +1,3 @@
-本项目用于完成NLP课程作业。学号：25023051。
-
 ### 一、模型与依赖
 
 - 向量提取模型: https://modelscope.cn/models/Qwen/Qwen3-VL-Embedding-2B

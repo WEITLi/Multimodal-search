@@ -149,13 +149,16 @@ class ITCA_Loss(nn.Module):
         text_features = F.normalize(text_features, dim=-1)
         
         # 计算相似度矩阵 [batch_size, batch_size]
+        # matrix对角线上是正样本,非对角线是负样本
         logit_scale = self.logit_scale.exp()
+        # 计算相似度
         logits_per_image = logit_scale * image_features @ text_features.t()
         logits_per_text = logits_per_image.t()
         
         batch_size = image_features.shape[0]
+        # 从0 -> N 的index,对于第i个样本，对应的正确文本在i_th col
         labels = torch.arange(batch_size, device=image_features.device)
-        
+        # 对称交叉熵: 让对角线上的数值最大,非对角线最小
         loss_i = F.cross_entropy(logits_per_image, labels)
         loss_t = F.cross_entropy(logits_per_text, labels)
         return (loss_i + loss_t) / 2

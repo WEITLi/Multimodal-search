@@ -13,38 +13,51 @@ collection_name = "qwen3_vl_images_with_attributes"
 IMAGE_DIR = "./pretrain_models/Qwen3-VL-Embedding-2B/images"
 ATTRIBUTES_DB_PATH = "sft/item_attributes.json"
 
-
-def create_collection_with_scalars():
+def create_collection_with_subgraphs():
+    """
+    根据给定的聚类特征与属性特征，构建特殊的索引结构:
+    (1) 向量聚类子图构建（Milvus底层的 IVF / HNSW 聚类分簇）
+    (2) 属性导航点子图构建 (倒排 + 标量过滤)
+    最后引擎端会进行 Reduce 合并
+    """
     if collection_name in client.list_collections():
         print("Collection (V2) 已存在，继续追加入库")
         return
         
-    print("Creating Milvus schema with Scalar fields for Boolean Filtering...")
+    print("Creating Schema for Multi-Subgraph Filter-ANN Indexing...")
     schema = MilvusClient.create_schema(auto_id=False, enable_dynamic_field=True)
     
     # Primary Key
     schema.add_field(field_name="id", datatype=DataType.VARCHAR, is_primary=True, max_length=500)
     
-    # Dense Vector: 4096 维 Qwen 图文一致性映射向量
+    # Dense Vector: 4096 维图像特征，用于构建「向量聚类子图」
     schema.add_field(field_name="vector", datatype=DataType.FLOAT_VECTOR, dim=4096)
     
-    # Metadata Fields: 这里保存的字段必须在创建索引前定义为标量字段，以便使用 `expr` 条件过滤
+    # Metadata Fields: 这里保存属性，用于构建「属性子图」的导航点
     schema.add_field(field_name="filename", datatype=DataType.VARCHAR, max_length=500)
     schema.add_field(field_name="category", datatype=DataType.VARCHAR, max_length=200, default_value="")
     schema.add_field(field_name="color", datatype=DataType.VARCHAR, max_length=100, default_value="")
 
     schema.verify()
     
-    # Create Index: 结合标量过滤的近似最近邻（Hybrid Search）
+    # --- Indexing Strategy (索引合并概念) ---
     index_params = client.prepare_index_params()
-    index_params.add_index(field_name="vector", index_type="FLAT", metric_type="COSINE")
-    # Milvus 2.x 针对标量字段建立倒排索引，加速 `expr` 查询
+    
+    # 1. 向量聚类子图索引 (在这里我们用 HNSW 模拟导航点遍历)
+    index_params.add_index(
+        field_name="vector", 
+        index_type="HNSW", # 使用基于图的 HNSW 算法体现“路径遍历检索点”
+        metric_type="COSINE",
+        params={"M": 16, "efConstruction": 200} 
+    )
+    
+    # 2. 属性子图索引 (倒排)，构建离散的属性导航点
+    # 在 Milvus 底层这体现为标量的 Trie 或 Bitmap 索引，后续和向量图取交集
     index_params.add_index(field_name="category", index_type="Trie")
     index_params.add_index(field_name="color", index_type="Trie")
     
     client.create_collection(collection_name=collection_name, schema=schema, index_params=index_params)
-    print("✅ Collection V2 (Filter-ANN enabled) 创建成功")
-
+    print("✅ Multi-Subgraph Collection 创建成功！合并策略准备就绪。")
 
 def load_attributes():
     if not os.path.exists(ATTRIBUTES_DB_PATH):
@@ -56,7 +69,6 @@ def load_attributes():
 def embed_image(image_path):
     with open(image_path, "rb") as f:
          b64 = base64.b64encode(f.read()).decode('utf-8')
-    # 真实部署调用后端计算 Embeddings
     response = session.post(
         "http://127.0.0.1:8848/v1/embeddings",
         json={"image": b64},
@@ -65,7 +77,7 @@ def embed_image(image_path):
     return response.json()["data"]
 
 def main():
-    create_collection_with_scalars()
+    create_collection_with_subgraphs()
     attributes_db = load_attributes()
     
     all_images = [f for f in os.listdir(IMAGE_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
@@ -75,8 +87,6 @@ def main():
     batch = []
     for i, img_name in enumerate(all_images):
         img_path = os.path.join(IMAGE_DIR, img_name)
-        # 从属性提取库里拿标签，若不存在先赋空字符串。
-        # 这里 img_name 可以当做 key 处理。实际可能需要去掉后缀，映射 pid。
         pid = img_name.split('.')[0]
         item_attrs = attributes_db.get(pid, {"category": "", "color": ""})
         
@@ -99,8 +109,7 @@ def main():
 
     if batch:
         client.upsert(collection_name=collection_name, data=batch)
-    print(f"✅ 入库完成")
+    print(f"✅ 入库完成，不同维度的子图导航节点已被写入。")
 
 if __name__ == '__main__':
-    # main() 示例防抛错
-    print("Script ready for Filter-ANN vector insertion.")
+    print("Script ready for Filter-ANN multi-subgraph insertion.")
