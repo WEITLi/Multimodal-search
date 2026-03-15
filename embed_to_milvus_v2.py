@@ -7,11 +7,11 @@ from pymilvus import MilvusClient, DataType
 session = requests.Session()
 session.trust_env = False
 
-DB_PATH = "/root/qwen3-vl/Qwen3-VL-Embedding-2B/milvus_v2_filter_ann.db"
+DB_PATH = "./pretrain_models/Qwen3-VL-Embedding-2B/milvus_v2_filter_ann.db"
 client = MilvusClient(DB_PATH)
 collection_name = "qwen3_vl_images_with_attributes"
-IMAGE_DIR = "/root/qwen3-vl/Qwen3-VL-Embedding-2B/images"
-ATTRIBUTES_DB_PATH = "item_attributes.json"
+IMAGE_DIR = "./pretrain_models/Qwen3-VL-Embedding-2B/images"
+ATTRIBUTES_DB_PATH = "sft/item_attributes.json"
 
 
 def create_collection_with_scalars():

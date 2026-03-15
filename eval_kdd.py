@@ -38,7 +38,7 @@ def evaluate():
     print(f"Evaluation on device: {device}")
 
     # ===== 1. 加载模型 =====
-    MODEL_PATH = "/root/qwen3-vl/Qwen3-VL-Embedding-2B"
+    MODEL_PATH = "./pretrain_models/Qwen3-VL-Embedding-2B"
     try:
         from transformers import AutoModel
         text_encoder = AutoModel.from_pretrained(MODEL_PATH, trust_remote_code=True).to(device)
@@ -52,7 +52,7 @@ def evaluate():
 
     visual_projector = VisualProjector(out_dim=4096).to(device)
     
-    weights_path = "kdd_visual_projector_qwen3_2B.pth"
+    weights_path = "sft/kdd_visual_projector_qwen3_2B.pth"
     if os.path.exists(weights_path):
         visual_projector.load_state_dict(torch.load(weights_path, map_location=device))
         print("✅ Loaded trained Visual Projector weights.")
@@ -63,8 +63,8 @@ def evaluate():
     visual_projector.eval()
 
     # ===== 2. 读取 Valid 数据与 Answer =====
-    VALID_TSV = "multimodal_valid/valid.tsv"
-    ANSWER_JSON = "multimodal_valid/valid_answer.json"
+    VALID_TSV = "data/multimodal_valid/valid.tsv"
+    ANSWER_JSON = "data/multimodal_valid/valid_answer.json"
 
     if not os.path.exists(VALID_TSV) or not os.path.exists(ANSWER_JSON):
         print(f"Dataset missing at {VALID_TSV} or {ANSWER_JSON}. Exiting dry run.")

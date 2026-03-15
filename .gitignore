@@ -23,3 +23,7 @@ embed_log.txt
 # Python缓存
 __pycache__/
 *.pyc
+
+pretrain_models/
+data/
+sft/

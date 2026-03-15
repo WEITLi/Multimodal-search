@@ -41,7 +41,7 @@ def format_data_for_qwen(example, tokenizer, max_length=512):
     return {"input_ids": full_ids, "labels": labels, "attention_mask": [1 if i != tokenizer.pad_token_id else 0 for i in full_ids]}
 
 
-def train_lora(model_id="Qwen/Qwen2.5-0.5B-Instruct", data_path="qwen_query_expansion_sft.jsonl", output_dir="./qwen_query_lora"):
+def train_lora(model_id="Qwen/Qwen2.5-0.5B-Instruct", data_path="sft/qwen_structured_query_sft.jsonl", output_dir="./qwen_query_lora"):
     print(f"=====================================")
     print(f"       Qwen-0.6B LoRA SFT")
     print(f"=====================================")

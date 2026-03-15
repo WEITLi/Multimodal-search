@@ -1,0 +1,17 @@
+Collecting qwen-vl-utils
+  Downloading qwen_vl_utils-0.0.14-py3-none-any.whl.metadata (9.0 kB)
+Collecting av (from qwen-vl-utils)
+  Downloading av-15.1.0-cp39-cp39-manylinux_2_28_x86_64.whl.metadata (4.6 kB)
+Requirement already satisfied: packaging in /data/conda/envs/torch_rechub/lib/python3.9/site-packages (from qwen-vl-utils) (26.0)
+Requirement already satisfied: pillow in /data/conda/envs/torch_rechub/lib/python3.9/site-packages (from qwen-vl-utils) (11.3.0)
+Requirement already satisfied: requests in /data/conda/envs/torch_rechub/lib/python3.9/site-packages (from qwen-vl-utils) (2.32.5)
+Requirement already satisfied: charset_normalizer<4,>=2 in /data/conda/envs/torch_rechub/lib/python3.9/site-packages (from requests->qwen-vl-utils) (3.4.5)
+Requirement already satisfied: idna<4,>=2.5 in /data/conda/envs/torch_rechub/lib/python3.9/site-packages (from requests->qwen-vl-utils) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /data/conda/envs/torch_rechub/lib/python3.9/site-packages (from requests->qwen-vl-utils) (2.6.3)
+Requirement already satisfied: certifi>=2017.4.17 in /data/conda/envs/torch_rechub/lib/python3.9/site-packages (from requests->qwen-vl-utils) (2026.2.25)
+Downloading qwen_vl_utils-0.0.14-py3-none-any.whl (8.1 kB)
+Downloading av-15.1.0-cp39-cp39-manylinux_2_28_x86_64.whl (39.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 39.1/39.1 MB 60.8 MB/s  0:00:00
+Installing collected packages: av, qwen-vl-utils
+
+Successfully installed av-15.1.0 qwen-vl-utils-0.0.14

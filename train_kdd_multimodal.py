@@ -9,7 +9,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer, get_cosine_schedule_with_warmup
 
 # 假设这里引入你封装好的模型架构
-# from scripts.qwen3_vl_embedding import Qwen3VLEmbedder 
+from scripts.qwen3_vl_embedding import Qwen3VLEmbedder
 # 因为你需要纯写代码而暂时不激活环境，我们Mock一个导入或者直接手写组件调用
 
 class KDDMultimodalDataset(Dataset):
@@ -168,7 +168,7 @@ def train():
     # ==========================
     # 1. 模型及 Tokenizer 初始化
     # ==========================
-    MODEL_PATH = "/root/qwen3-vl/Qwen3-VL-Embedding-2B"
+    MODEL_PATH = "./pretrain_models/Qwen3-VL-Embedding-2B"
     try:
         from transformers import AutoModel
         # Qwen3-VL 的文本编码部分（实际部署时可接入含 LoRA 的 PEFT）
@@ -192,7 +192,7 @@ def train():
     # ==========================
     # 2. 数据加载
     # ==========================
-    train_dataset = KDDMultimodalDataset("multimodal_train_sampleset/train.sample.tsv", tokenizer)
+    train_dataset = KDDMultimodalDataset("./data/multimodal_train_sampleset/train.sample.tsv", tokenizer)
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, drop_last=True, num_workers=4)
 
     # ==========================
