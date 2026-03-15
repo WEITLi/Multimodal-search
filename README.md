@@ -17,6 +17,7 @@
 | `server.py` | 启动 FastAPI 服务，加载 Qwen3-VL-Embedding-2B 模型并在本地 `8848` 暴露特征抽取接口。 |
 | `check_images.py` | 验证下载的图像文件是否损坏。 |
 | `File.md` | 开发说明文档，详细记录了 KDD TSV 数据集的 9 列字段含义与解析逻辑。 |
+| `train_real_images_multimodal.py` | **[NEW!] [拓展] 真实业务视角的模型训练脚本**。抛弃 KDD 数据集的干瘪特征，演示如何直接读取本地 `.jpg` 原图，利用 Qwen3-VL 的原生 Vision 模块进行完整的 InfoNCE 对比学习。 |
 
 #### V1 基础版：纯密集向量召回 (Dense Retrieval)
 | 文件名 | 功能描述 |
@@ -33,8 +34,8 @@
 | `build_finetune_data.py` | [SFT数据] 提取 Query 词，强制 LLM Teacher 构建包含 `rewritten`(扩写) 与 `attributes`(属性) 的结构化微调数据集。 |
 | `train_qwen_lora.py` | [SFT训练] 使用 LoRA 微调 Qwen-0.6B 等小模型，使其掌握意图泛化与 JSON 属性提取能力。 |
 | `extract_visual_properties.py`| [属性抽取] 对图片 RoI 区域应用 CLIP，实现无文本情况下的图生类别、颜色等标签，持久化至 `item_attributes.json`。 |
-| `embed_to_milvus_v2.py` | [高级入库] 创建带有 Scalar(标量字段如类别/颜色) 的新 Milvus Schema，并将向量与属性一同入库。 |
-| `rag_pipeline_v2.py` | **[端到端闭环]** 运行时：1. SFT 小模型意图泛化 2. Milvus 解析出的属性下推为 Bool Filter (例如 `color=='red'`) 3. 使用 `VisualProjector` 对比检索库中同条件下特征最相近的商品。 |
+| `embed_to_milvus_v2.py` | [多子图入库] 更改索引构建过程。按照向量（HNSW）与属性（Trie）同步构建联合索引子图，形成后续带属性过滤计算的导航点。 |
+| `rag_pipeline_v2.py` | **[端到端闭环]** 运行时：采用双分支召回架构。（1）向量召回探索子图；（2）通过 LLM 意图解析强制下推 `Expr` 命中属性导航点，只遍历具有相同属性的点。最后将两路结果 Reduce 合并去重并打分输出。 |
 
 
 ### 四、V2 推荐运行执行顺序 (Execution Order)
