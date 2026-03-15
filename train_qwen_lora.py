@@ -12,17 +12,16 @@ from transformers import (
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
 def format_data_for_qwen(example, tokenizer, max_length=512):
-    # 构建 Qwen 的 Chat 格式 (也可以使用 tokenizer.apply_chat_template)
+    # 构建 Qwen 的 Chat 格式
     messages = example['messages']
     
-    # 抽取 user 和 assistant
+    # 抽取各个 role 的 content
+    sys_msg = next((m['content'] for m in messages if m['role'] == 'system'), "你是一个电商搜索意图理解专家。")
     user_msg = next((m['content'] for m in messages if m['role'] == 'user'), "")
     assistant_msg = next((m['content'] for m in messages if m['role'] == 'assistant'), "")
     
-    # ChatML Format 举例:
-    # <|im_start|>system\nYou are an expert...<|im_end|>\n<|im_start|>user\nquery...<|im_end|>\n<|im_start|>assistant\nexpanded...<|im_end|>
-    # Qwen-2.5 常用此格式
-    prompt = f"<|im_start|>system\n你是一个电商意图理解专家。<|im_end|>\n<|im_start|>user\n{user_msg}<|im_end|>\n<|im_start|>assistant\n"
+    # Qwen-2.5 常用 ChatML 格式
+    prompt = f"<|im_start|>system\n{sys_msg}<|im_end|>\n<|im_start|>user\n{user_msg}<|im_end|>\n<|im_start|>assistant\n"
     
     # Tokenize input
     input_ids = tokenizer.encode(prompt, add_special_tokens=False)

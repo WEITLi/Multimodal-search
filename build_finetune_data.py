@@ -24,6 +24,14 @@ SYSTEM_PROMPT = (
     "- 每个元素格式：{\"rewritten\": \"...\", \"attributes\": {\"category\": \"...\", \"color\": \"...\"}}"
 )
 
+SFT_SYSTEM_PROMPT = (
+    "你是一个电商搜索意图理解专家。请同时完成以下两项任务：\n"
+    "1. 对用户的搜索词进行泛化与改写，生成更详细的搜索短语。\n"
+    "2. 从用户的搜索词中提取具体商品属性（category，color）。未提及则留空。\n"
+    "请严格只输出合法的 JSON，格式为：\n"
+    "{\"rewritten\": \"...\", \"attributes\": {\"category\": \"...\", \"color\": \"...\"}}"
+)
+
 # ── API 客户端 ────────────────────────────────────────────────────────────────
 def make_client() -> OpenAI:
     api_key = os.environ.get("DASHSCOPE_API_KEY", "YOUR_API_KEY_HERE")
@@ -127,7 +135,7 @@ def build_finetune_data(tsv_path: str, output_jsonl: str, max_samples: int = 500
                 record = {
                     "type": "chatml",
                     "messages": [
-                        {"role": "system",    "content": SYSTEM_PROMPT},
+                        {"role": "system",    "content": SFT_SYSTEM_PROMPT},
                         {"role": "user",      "content": query},
                         {"role": "assistant", "content": assistant_content},
                     ],

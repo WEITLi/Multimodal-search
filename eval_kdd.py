@@ -135,7 +135,8 @@ def evaluate():
             sorted_indices = torch.argsort(sims, descending=True).cpu().numpy()
             retrieved_pids = [cand_pids[idx] for idx in sorted_indices]
             
-            gt_pids = ground_truth.get(qid, [])
+            # Ground truth pids in valid_answer.json are integers, we convert them to strings for matching
+            gt_pids = [str(pid) for pid in ground_truth.get(qid, [])]
             
             # 计算指标
             ndcg_scores.append(compute_ndcg(retrieved_pids, gt_pids, k=5))
